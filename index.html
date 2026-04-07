@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daglig checklista</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --surface2: #f0eeea;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --accent: #1D9E75; --accent-light: #E1F5EE; --accent-dark: #0F6E56;
+    --danger: #D85A30; --danger-light: #FAECE7;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18; --surface: #242422; --surface2: #2c2c2a;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --text: #f0eeea; --text2: #b4b2a9; --text3: #888780;
+      --accent-light: #085041; --danger-light: #4A1B0C;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 80px; }
+  header { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 16px 20px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
+  .header-left h1 { font-size: 18px; font-weight: 500; }
+  .header-left .sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .icon-btn { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; color: var(--text2); cursor: pointer; transition: background 0.15s; font-family: inherit; }
+  .icon-btn:hover { background: var(--border); }
+  .date-nav { display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--surface); border-bottom: 0.5px solid var(--border); }
+  .date-nav button { background: none; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 6px 12px; color: var(--text2); cursor: pointer; font-size: 14px; transition: background 0.15s; font-family: inherit; }
+  .date-nav button:hover { background: var(--surface2); }
+  .date-display { flex: 1; text-align: center; font-size: 14px; font-weight: 500; }
+  .today-btn { background: var(--accent-light) !important; color: var(--accent-dark) !important; border-color: var(--accent) !important; font-size: 12px !important; }
+  main { padding: 16px 20px; max-width: 600px; margin: 0 auto; }
+  .progress-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; }
+  .progress-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+  .progress-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+  .category { margin-bottom: 16px; }
+  .cat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cat-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cat-add { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: var(--radius-sm); transition: background 0.15s; }
+  .cat-add:hover { background: var(--surface2); color: var(--text); }
+  .items-list { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 0.5px solid var(--border); transition: background 0.12s; }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--surface2); }
+  .chk { width: 22px; height: 22px; min-width: 22px; border-radius: 6px; border: 1.5px solid var(--border2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: transparent; }
+  .chk.on { background: var(--accent); border-color: var(--accent); }
+  .chk.on::after { content:''; width:12px; height:7px; border-left:2px solid white; border-bottom:2px solid white; transform:rotate(-45deg) translateY(-1px); display:block; }
+  .item-body { flex: 1; min-width: 0; }
+  .item-name { font-size: 15px; color: var(--text); transition: color 0.12s; }
+  .item-note-text { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .item.done .item-name { color: var(--text3); text-decoration: line-through; }
+  .item-actions { opacity: 0; transition: opacity 0.15s; }
+  .item:hover .item-actions { opacity: 1; }
+  .act-btn { background: none; border: none; color: var(--text3); cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 15px; transition: background 0.12s; }
+  .act-btn:hover { background: var(--surface2); color: var(--text2); }
+  .empty { padding: 18px 16px; text-align: center; color: var(--text3); font-size: 14px; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
+  @media(min-width:480px){ .modal-bg { align-items: center; } .modal { border-radius: var(--radius) !important; } }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px; width: 100%; max-width: 480px; border: 0.5px solid var(--border); }
+  .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
+  .modal label { display: block; font-size: 13px; color: var(--text2); margin: 14px 0 6px; }
+  .modal label:first-of-type { margin-top: 0; }
+  .modal input, .modal select, .modal textarea { width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 15px; color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(29,158,117,0.15); }
+  .modal textarea { resize: vertical; min-height: 60px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-primary { flex:1; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 12px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-sec { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 15px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .btn-sec:hover { background: var(--border); }
+  .btn-del { display:none; width:100%; margin-top:10px; background: none; color: var(--danger); border: 0.5px solid var(--danger); border-radius: var(--radius-sm); padding: 12px; font-size: 15px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .btn-del:hover { background: var(--danger-light); }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s, border-color 0.15s; }
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.sel { border-color: var(--text); }
+  .cat-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .cat-row:last-child { border-bottom: none; }
+  .fab { position: fixed; bottom: 24px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 26px; cursor: pointer; box-shadow: 0 4px 12px rgba(29,158,117,0.35); display: flex; align-items: center; justify-content: center; transition: transform 0.15s; z-index: 50; }
+  .fab:hover { transform: scale(1.07); }
+  .fab:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Daglig checklista</h1>
+    <div class="sub" id="h-sub"></div>
+  </div>
+  <button class="icon-btn" onclick="openManage()">Hantera kategorier</button>
+</header>
+
+<div class="date-nav">
+  <button onclick="changeDay(-1)">&#8592;</button>
+  <div class="date-display" id="nav-date"></div>
+  <button class="today-btn" onclick="goToday()">Idag</button>
+  <button onclick="changeDay(1)">&#8594;</button>
+</div>
+
+<main id="main"></main>
+<button class="fab" onclick="openAdd(null)" title="Lägg till punkt">+</button>
+
+<!-- Item modal -->
+<div class="modal-bg" id="m-item">
+  <div class="modal">
+    <h2 id="m-item-title">Lägg till punkt</h2>
+    <label>Namn</label>
+    <input id="f-name" placeholder="t.ex. Omega-3" />
+    <label>Anteckning (valfritt)</label>
+    <textarea id="f-note" placeholder="t.ex. 2 kapslar med frukost"></textarea>
+    <label>Kategori</label>
+    <select id="f-cat"></select>
+    <div class="modal-btns">
+      <button class="btn-sec" onclick="closeM('m-item')">Avbryt</button>
+      <button class="btn-primary" onclick="saveItem()">Spara</button>
+    </div>
+    <button class="btn-del" id="btn-del" onclick="delItem()">Ta bort punkt</button>
+  </div>
+</div>
+
+<!-- Manage modal -->
+<div class="modal-bg" id="m-manage">
+  <div class="modal">
+    <h2>Hantera kategorier</h2>
+    <div id="cat-list"></div>
+    <div style="margin-top:16px;border-top:0.5px solid var(--border);padding-top:16px;">
+      <label>Ny kategori – namn</label>
+      <input id="nc-name" placeholder="t.ex. Motion" />
+      <label>Färg</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-sec" onclick="closeM('m-manage')">Stäng</button>
+      <button class="btn-primary" onclick="addCat()">Lägg till kategori</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS=['#1D9E75','#378ADD','#D85A30','#7F77DD','#BA7517','#D4537E','#639922','#E24B4A','#888780'];
+let cats=JSON.parse(localStorage.getItem('cats')||'null')||[
+  {id:'mat',name:'Mat & dryck',color:'#1D9E75'},
+  {id:'till',name:'Tillskott',color:'#378ADD'},
+  {id:'oga',name:'Ögondroppar',color:'#7F77DD'},
+  {id:'med',name:'Medicin',color:'#D85A30'},
+];
+let items=JSON.parse(localStorage.getItem('items')||'null')||[
+  {id:'i1',catId:'mat',name:'Frukost',note:''},
+  {id:'i2',catId:'mat',name:'Lunch',note:''},
+  {id:'i3',catId:'mat',name:'Middag',note:''},
+  {id:'i4',catId:'till',name:'D-vitamin',note:'2000 IE'},
+  {id:'i5',catId:'till',name:'Omega-3',note:'2 kapslar'},
+  {id:'i6',catId:'oga',name:'Morgondroppar',note:'Vänster + höger öga'},
+  {id:'i7',catId:'oga',name:'Kvällsdroppar',note:'Vänster + höger öga'},
+];
+let checks=JSON.parse(localStorage.getItem('checks')||'{}');
+let curDate=todayStr();
+let editId=null;
+let selColor=COLORS[0];
+
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function sv(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function saveAll(){sv('cats',cats);sv('items',items);sv('checks',checks);}
+function dkey(id){return curDate+':'+id;}
+function isOn(id){return!!checks[dkey(id)];}
+function toggle(id){checks[dkey(id)]=!checks[dkey(id)];saveAll();render();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(s){const d=new Date(s+'T12:00:00');return d.toLocaleDateString('sv-SE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+function changeDay(d){const dt=new Date(curDate+'T12:00:00');dt.setDate(dt.getDate()+d);curDate=dt.toISOString().slice(0,10);render();}
+function goToday(){curDate=todayStr();render();}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+
+function render(){
+  document.getElementById('h-sub').textContent=curDate===todayStr()?'Idag':'';
+  document.getElementById('nav-date').textContent=fmtDate(curDate);
+  const total=items.length, done=items.filter(i=>isOn(i.id)).length;
+  const pct=total?Math.round(done/total*100):0;
+  let h=`<div class="progress-wrap">
+    <div class="progress-head"><span>Dagens framsteg</span><span>${done} / ${total} klart</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+  for(const c of cats){
+    const ci=items.filter(i=>i.catId===c.id);
+    h+=`<div class="category">
+      <div class="cat-header">
+        <div class="cat-title"><div class="cat-dot" style="background:${c.color}"></div>${esc(c.name)}</div>
+        <button class="cat-add" onclick="openAdd('${c.id}')" title="Lägg till">+</button>
+      </div>
+      <div class="items-list">`;
+    if(!ci.length) h+=`<div class="empty">Inga punkter — tryck + för att lägga till</div>`;
+    for(const it of ci){
+      const on=isOn(it.id);
+      h+=`<div class="item${on?' done':''}">
+        <div class="chk${on?' on':''}" onclick="toggle('${it.id}')"></div>
+        <div class="item-body">
+          <div class="item-name">${esc(it.name)}</div>
+          ${it.note?`<div class="item-note-text">${esc(it.note)}</div>`:''}
+        </div>
+        <div class="item-actions"><button class="act-btn" onclick="openEdit('${it.id}')">&#9998;</button></div>
+      </div>`;
+    }
+    h+=`</div></div>`;
+  }
+  document.getElementById('main').innerHTML=h;
+}
+
+function openAdd(catId){
+  editId=null;
+  document.getElementById('m-item-title').textContent='Lägg till punkt';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-note').value='';
+  document.getElementById('btn-del').style.display='none';
+  fillCatSel(catId);
+  document.getElementById('m-item').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),120);
+}
+
+function openEdit(id){
+  const it=items.find(i=>i.id===id);if(!it)return;
+  editId=id;
+  document.getElementById('m-item-title').textContent='Redigera punkt';
+  document.getElementById('f-name').value=it.name;
+  document.getElementById('f-note').value=it.note||'';
+  document.getElementById('btn-del').style.display='block';
+  fillCatSel(it.catId);
+  document.getElementById('m-item').classList.add('open');
+}
+
+function fillCatSel(selCat){
+  document.getElementById('f-cat').innerHTML=cats.map(c=>`<option value="${c.id}"${c.id===selCat?' selected':''}>${esc(c.name)}</option>`).join('');
+}
+
+function saveItem(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){document.getElementById('f-name').focus();return;}
+  const note=document.getElementById('f-note').value.trim();
+  const catId=document.getElementById('f-cat').value;
+  if(editId){const it=items.find(i=>i.id===editId);if(it){it.name=name;it.note=note;it.catId=catId;}}
+  else items.push({id:'i'+Date.now(),catId,name,note});
+  saveAll();closeM('m-item');render();
+}
+
+function delItem(){
+  if(!editId||!confirm('Ta bort denna punkt?'))return;
+  items=items.filter(i=>i.id!==editId);
+  saveAll();closeM('m-item');render();
+}
+
+function openManage(){
+  renderCatList();renderSwatches();
+  document.getElementById('nc-name').value='';
+  document.getElementById('m-manage').classList.add('open');
+}
+
+function renderCatList(){
+  const el=document.getElementById('cat-list');
+  if(!cats.length){el.innerHTML='<div style="color:var(--text3);font-size:14px;padding:8px 0;">Inga kategorier ännu.</div>';return;}
+  el.innerHTML=cats.map(c=>`<div class="cat-row">
+    <div style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></div>
+    <span style="flex:1;font-size:15px;">${esc(c.name)}</span>
+    <button class="act-btn" style="color:var(--danger);" onclick="delCat('${c.id}')">&#128465;</button>
+  </div>`).join('');
+}
+
+function renderSwatches(){
+  document.getElementById('swatches').innerHTML=COLORS.map(c=>`<div class="swatch${c===selColor?' sel':''}" style="background:${c}" onclick="selSwatch('${c}')"></div>`).join('');
+}
+
+function selSwatch(c){selColor=c;renderSwatches();}
+
+function addCat(){
+  const name=document.getElementById('nc-name').value.trim();
+  if(!name){document.getElementById('nc-name').focus();return;}
+  cats.push({id:'c'+Date.now(),name,color:selColor});
+  document.getElementById('nc-name').value='';
+  saveAll();renderCatList();render();
+}
+
+function delCat(id){
+  const has=items.some(i=>i.catId===id);
+  if(has&&!confirm('Kategorin har punkter. Ta bort ändå?'))return;
+  cats=cats.filter(c=>c.id!==id);
+  items=items.filter(i=>i.catId!==id);
+  saveAll();renderCatList();render();
+}
+
+document.querySelectorAll('.modal-bg').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open'));
+});
+
+render();
+</script>
+</body>
+</html>
